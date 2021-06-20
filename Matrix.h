@@ -68,7 +68,7 @@ public:
         return *this;
     }
 
-    Matrix(Matrix &&rhs) : Matrix() {
+    Matrix(const Matrix &&rhs) : Matrix() {
         swap(this->rows, rhs.rows);
         swap(this->columns, rhs.columns);
         swap(this->determinant, rhs.determinant);

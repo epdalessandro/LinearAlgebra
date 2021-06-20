@@ -19,7 +19,7 @@ public:
     int findPivotInRow(Matrix<double> &mat, uint32_t row, uint32_t startCol, uint32_t endCol); //DONE
     pair<int,int> findPivotInMatrix(Matrix<double> &mat, uint32_t startRow, uint32_t startCol, uint32_t endCol); //DONE
     vector<bool> getIndepCols(Matrix<double> &mat); 
-    void calcDeterminant();
+    void calcDeterminant(Matrix<double> &mat);
     void getInformation();
     void printInformation();
 

@@ -79,12 +79,10 @@ void LinearAlgebra::getInput() {
     uint32_t col;
     cin >> numMatrices;
     if(infoMode) { //info mode
-        matrices.reserve(numMatrices * num);
+        uint32_t count = 0;
+        matrices.resize(numMatrices * num);
         while(cin >> row >> col) {
-            // Matrix<double> m(row, col, cin);
-            for(uint32_t n = 0; n < num; n++) {
-                matrices.emplace_back(row,col,cin);
-            }
+            matrices[count++] = Matrix<double>(row,col,cin);
         }
     }
     else { //operation mode
@@ -92,8 +90,7 @@ void LinearAlgebra::getInput() {
         operators.reserve(numMatrices - 1);
         char op;
         while(cin >> row >> col) {
-            Matrix<double> m(row, col, cin);
-            matrices.emplace_back(m);
+            matrices.emplace_back(row,col,cin);
             cin >> op;
             if(op == '+' || op == '-' || op == '*') {
                 operators.push_back(op);
@@ -249,6 +246,12 @@ void LinearAlgebra::findNullSpace(Matrix<double> &mat) {
 void LinearAlgebra::findRowSpace(Matrix<double> &mat) {
     transpose(mat);
     findColSpace(mat);
+}
+
+void LinearAlgebra::calcDeterminant(Matrix<double> &mat) { //must be a square matrix
+    for(uint32_t r = 0; r < mat.rows; r++) {
+        mat.determinant *= mat(r,r);
+    }
 }
 
 // [Matrix]   [REF]   [RREF]   [Transpose]  [Inverse]   [RowSpace]  [ColSpace]  [NullSpace]
