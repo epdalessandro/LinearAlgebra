@@ -68,20 +68,23 @@ public:
         return *this;
     }
 
-    Matrix(const Matrix &&rhs) : Matrix() {
-        swap(this->rows, rhs.rows);
-        swap(this->columns, rhs.columns);
-        swap(this->determinant, rhs.determinant);
-        swap(this->matrix, rhs.matrix);
+    //Move Copy Constructor
+    Matrix(Matrix &&rhs) : Matrix() { //Create a default matrix to swap with
+        swap(*this, rhs);
     }
 
     //Move Assignment Operator
-    Matrix &operator=(const Matrix &&rhs) {
-        swap(this->rows, rhs.rows);
-        swap(this->columns, rhs.columns);
-        swap(this->determinant, rhs.determinant);
-        swap(this->matrix, rhs.matrix);
+    Matrix &operator=(Matrix &&rhs) {
+        swap(*this, rhs);
         return *this;
+    }
+
+    void swap(Matrix<T> &first, Matrix<T> &second) { //custom swap for matrices
+        std::swap(first.rows, second.rows);
+        std::swap(first.columns, second.columns);
+        std::swap(first.determinant, second.determinant);
+        first.matrix = second.matrix;
+        second.matrix = nullptr; //need to let it destruct safely w/o destructing the swapped matrix
     }
     
     //Destructor
