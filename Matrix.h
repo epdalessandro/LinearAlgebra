@@ -78,14 +78,6 @@ public:
         swap(*this, rhs);
         return *this;
     }
-
-    void swap(Matrix<T> &first, Matrix<T> &second) { //custom swap for matrices
-        std::swap(first.rows, second.rows);
-        std::swap(first.columns, second.columns);
-        std::swap(first.determinant, second.determinant);
-        first.matrix = second.matrix;
-        second.matrix = nullptr; //need to let it destruct safely w/o destructing the swapped matrix
-    }
     
     //Destructor
     ~Matrix() {
@@ -200,6 +192,14 @@ private:
                 matrix[row][col] = rhs.matrix[row][col];
             }
         }
+    }
+
+    void swap(Matrix<T> &first, Matrix<T> &second) { //custom swap for matrices
+        std::swap(first.rows, second.rows);
+        std::swap(first.columns, second.columns);
+        std::swap(first.determinant, second.determinant);
+        first.matrix = second.matrix;
+        second.matrix = nullptr; //need to let it destruct safely w/o destructing the swapped matrix
     }
 
 };
