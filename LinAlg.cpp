@@ -166,7 +166,11 @@ void LinearAlgebra::inverse(Matrix<double> &mat) {
     subtractDown(newMat,0,0,mat.columns);
     subtractUp(newMat,0,mat.columns);
 
-    mat = newMat; //can use rValue here
+    for(uint32_t r = 0; r < mat.rows; r++) {
+        for(uint32_t c = 0; c < mat.rows; c++) {
+            mat(r,c) = newMat(r, c + mat.columns);
+        }
+    }
 }
 
 void LinearAlgebra::divideRow(Matrix<double> &mat, uint32_t row) {
@@ -207,6 +211,7 @@ void LinearAlgebra::subtractRow(Matrix<double> &mat, uint32_t toSubtract, uint32
 
 void LinearAlgebra::findColSpace(Matrix<double> &mat) {
     vector<bool> independentCols = getIndepCols(mat);
+
     uint32_t numIndepCols = 0;
     for(uint32_t c = 0; c < independentCols.size(); c++) {
         if(independentCols[c]) {
@@ -224,13 +229,16 @@ void LinearAlgebra::findColSpace(Matrix<double> &mat) {
             newMatCol++;
         }
     }
+
+    mat = newMat;
 }
 
 void LinearAlgebra::findNullSpace(Matrix<double> &mat) {
     vector<bool> independentCols = getIndepCols(mat);
+
     uint32_t numNullCols = 0;
     for(uint32_t c = 0; c < independentCols.size(); c++) {
-        if(independentCols[c]) {
+        if(!independentCols[c]) {
             numNullCols++;
         }
     }
@@ -245,11 +253,14 @@ void LinearAlgebra::findNullSpace(Matrix<double> &mat) {
             newMatCol++;
         }
     }
+
+    mat = newMat;
 }
 
 void LinearAlgebra::findRowSpace(Matrix<double> &mat) {
     transpose(mat);
     findColSpace(mat);
+    transpose(mat);
 }
 
 void LinearAlgebra::calcDeterminant(Matrix<double> &mat) { //must be a square matrix
@@ -262,15 +273,19 @@ void LinearAlgebra::calcDeterminant(Matrix<double> &mat) { //must be a square ma
 void LinearAlgebra::getInformation() {
     for(uint32_t m = 0; m < numMatrices; m++) {
         subtractDown(matrices[1 + m * 8], 0, 0, matrices[1 + m * 8].columns); //REF
-        subtractDown(matrices[2 + m * 8], 0, 0, matrices[2 + m * 8].columns); //RREF
-        subtractUp(matrices[2 + m * 8], 0, matrices[2 + m * 8].columns);
+
+        matrices[2 + m * 8] = matrices[1 + m * 8]; //Copy REF to RREF matrix 
+        subtractUp(matrices[2 + m * 8], 0, matrices[2 + m * 8].columns); //RREF
+
         transpose(matrices[3 + m * 8]); //Transpose
+
         if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
             inverse(matrices[4 + m * 8]); //Inverse
         }
-        // findColSpace(matrices[6 + m * 8]);
-        // findNullSpace(matrices[7 + m * 8]);
-        // findRowSpace(matrices[5 + m * 8]);
+
+        findColSpace(matrices[6 + m * 8]); //Column Space
+        findNullSpace(matrices[7 + m * 8]); //Null Space
+        findRowSpace(matrices[5 + m * 8]); //Row Space
     }
 }
 
@@ -283,14 +298,17 @@ void LinearAlgebra::printInformation() {
         if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
             cout << "Inverse:\n" << matrices[4 + m * 8] << "\n\n";
         }
-        // cout << "Column Space:\n" << matrices[6 + m * 8] << "\n\n";
-        // cout << "Null Space:\n" << matrices[7 + m * 8] << "\n\n";
-        // cout << "Row Space:\n" << matrices[5 + m * 8] << "\n\n";
+
+        cout << "Column Space:\n";
+        printColumns(matrices[6 + m * 8]);
+        cout << "Null Space:\n";
+        printColumns(matrices[7 + m * 8]);
+        cout << "Row Space:\n";
+        printRows(matrices[5 + m * 8]);
     }
 }
 
 /* ---------------------- ACCESSORS ---------------------- */
-//Need to make sure when have multiple matrices, right now its a static access
 Matrix<double>& LinearAlgebra::getREF(uint32_t numInputMat) {
     return matrices[numInputMat * 8 + 1];
 }
@@ -344,10 +362,11 @@ pair<int,int> LinearAlgebra::findPivotInMatrix(Matrix<double> &mat, uint32_t sta
     return make_pair(-1, -1);
 }
 
-vector<bool> LinearAlgebra::getIndepCols(Matrix<double> &mat) { //I should return this by reference but then its a reference to a destructed object
+//Not having a reference is intention, need to create a copy so that the original matrix is untouched
+vector<bool> LinearAlgebra::getIndepCols(Matrix<double> mat) { //I should return this by reference but then its a reference to a destructed object
     subtractDown(mat, 0, 0, mat.columns);                       //maybe stealing means its not actually copied?
     subtractUp(mat, 0, mat.columns);
-    vector<bool> independentCols(false, mat.columns);
+    vector<bool> independentCols(mat.columns, false);
     uint32_t nextRow = 0;
     for(uint32_t c = 0; c < mat.columns; c++) {
         for(uint32_t r = nextRow; r < mat.rows; r++) {
@@ -360,4 +379,42 @@ vector<bool> LinearAlgebra::getIndepCols(Matrix<double> &mat) { //I should retur
     }
 
     return independentCols;
+}
+
+void LinearAlgebra::printColumns(Matrix<double> const &mat) {
+    if(mat.getRows() == 0 || mat.getCols() == 0) { //Empty Matrix
+        cout << "[  ]\n\n";
+    }
+    else { //Non-Empty Matrix
+        for(uint32_t r = 0; r < mat.getRows() - 1; r++) {
+            for(uint32_t c = 0; c < mat.getCols(); c++) {
+                cout << "[ " << mat(r,c) << " ]   ";
+            }
+            cout << "\n";
+        }
+        for(uint32_t c = 0; c < mat.getCols(); c++) {
+            cout << "[ " << mat(mat.getRows() - 1,c) << " ],  ";
+        }
+        cout << "\n\n";
+    }
+}
+
+void LinearAlgebra::printRows(Matrix<double> const &mat) {
+    if(mat.getRows() == 0 || mat.getCols() == 0) { //Empty Matrix
+        cout << "[ ";
+    }
+    else { //Non-Empty Matrix
+        for(uint32_t r = 0; r < mat.getRows() - 1; r++) {
+            cout << "[  ";
+            for(uint32_t c = 0; c < mat.getCols(); c++) {
+                cout << mat(r,c) << " ";
+            }
+            cout << " ],\n";
+        }
+        cout << "[  ";
+        for(uint32_t c = 0; c < mat.getCols(); c++) {
+            cout << mat(mat.getRows() - 1,c) << " ";
+        }
+    }
+    cout << " ]\n\n";
 }

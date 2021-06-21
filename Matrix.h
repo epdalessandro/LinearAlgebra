@@ -210,12 +210,18 @@ private:
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os, const Matrix<T> &mat) {
-    for(uint32_t row = 0; row < mat.getRows(); row++) {
-        os << "[  ";
-        for(uint32_t col = 0; col < mat.getCols(); col++) {
-            os << mat(row,col) << " ";
-        }
-        os << " ]\n"; //already an extra space after the last element so only one extra
+    if(mat.getRows() == 0 || mat.getCols() == 0) { //Not sure how to get this w/ current for loop
+        os << "[  ]\n";
     }
+    else {
+        for(uint32_t row = 0; row < mat.getRows(); row++) {
+            os << "[  ";
+            for(uint32_t col = 0; col < mat.getCols(); col++) {
+                os << mat(row,col) << " ";
+            }
+            os << " ]\n"; //already an extra space after the last element so only one extra
+        }
+    }
+
     return os;
 }

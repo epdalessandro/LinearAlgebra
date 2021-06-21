@@ -18,7 +18,7 @@ public:
     void subtractRow(Matrix<double> &mat, uint32_t toSubtract, uint32_t subtractFrom); //DONE
     int findPivotInRow(Matrix<double> &mat, uint32_t row, uint32_t startCol, uint32_t endCol); //DONE
     pair<int,int> findPivotInMatrix(Matrix<double> &mat, uint32_t startRow, uint32_t startCol, uint32_t endCol); //DONE
-    vector<bool> getIndepCols(Matrix<double> &mat); 
+    vector<bool> getIndepCols(Matrix<double> mat); 
     void calcDeterminant(Matrix<double> &mat);
     void getInformation();
     void printInformation();
@@ -36,6 +36,8 @@ public:
     Matrix<double>& getColSpace(uint32_t numInputMat); //DONE
     Matrix<double>& getNullSpace(uint32_t numInputMat); //DONE
 
+    void printColumns(Matrix<double> const &mat); //DONE
+    void printRows(Matrix<double> const &mat); //DONE
 
     Matrix<double> performOperations(); //DONE
 
