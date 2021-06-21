@@ -268,9 +268,9 @@ void LinearAlgebra::getInformation() {
         if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
             inverse(matrices[4 + m * 8]); //Inverse
         }
-        findColSpace(matrices[6 + m * 8]);
-        findNullSpace(matrices[7 + m * 8]);
-        findRowSpace(matrices[5 + m * 8]);
+        // findColSpace(matrices[6 + m * 8]);
+        // findNullSpace(matrices[7 + m * 8]);
+        // findRowSpace(matrices[5 + m * 8]);
     }
 }
 
@@ -283,9 +283,9 @@ void LinearAlgebra::printInformation() {
         if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
             cout << "Inverse:\n" << matrices[4 + m * 8] << "\n\n";
         }
-        cout << "Column Space:\n" << matrices[6 + m * 8] << "\n\n";
-        cout << "Null Space:\n" << matrices[7 + m * 8] << "\n\n";
-        cout << "Row Space:\n" << matrices[5 + m * 8] << "\n\n";
+        // cout << "Column Space:\n" << matrices[6 + m * 8] << "\n\n";
+        // cout << "Null Space:\n" << matrices[7 + m * 8] << "\n\n";
+        // cout << "Row Space:\n" << matrices[5 + m * 8] << "\n\n";
     }
 }
 
