@@ -25,18 +25,22 @@ public:
     }
     
     //Constructor + Initializer
-    Matrix(uint32_t numRows, uint32_t numCols, std::istream& matrixInit) : Matrix(numRows, numCols) {
+    Matrix(uint32_t numRows, uint32_t numCols, std::istream& matrixInit) : 
+        rows(numRows), columns(numCols), matrix(new T*[rows]) {
+        // assert((rows >= 0) && (columns >= 0));
+        for(uint32_t i = 0; i < rows; i++) {
+            matrix[i] = new T[columns];
+        }
+
         T input;
         uint32_t row = 0;
         uint32_t col = 0;
-        uint32_t readIn = 0;
-        while(matrixInit >> input || readIn == numRows * numCols) {
+        while(matrixInit >> input) {
             matrix[row][col] = input;
             if((++col % columns) == 0) { //reached the end of a row
                 col = 0;
                 row++;
             }
-            readIn++;
         }
     }
 

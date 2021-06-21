@@ -82,7 +82,11 @@ void LinearAlgebra::getInput() {
         uint32_t count = 0;
         matrices.resize(numMatrices * num);
         while(cin >> row >> col) {
-            matrices[count++] = Matrix<double>(row,col,cin);
+            matrices[count] = Matrix<double>(row,col,cin);
+            for(uint32_t c = count + 1; c < count + 8; c++) {
+                matrices[c] = matrices[c - 1];
+            }
+            count += 8;
         }
     }
     else { //operation mode
@@ -150,7 +154,7 @@ void LinearAlgebra::subtractUp(Matrix<double> &mat, uint32_t startCol, uint32_t 
 }
 
 void LinearAlgebra::inverse(Matrix<double> &mat) {
-    Matrix<double> newMat(mat.columns * 2, mat.rows);
+    Matrix<double> newMat(mat.rows, mat.columns * 2);
     for(uint32_t r = 0; r < mat.rows; r++) {
         for(uint32_t c = 0; c < mat.rows; c++) {
             newMat(r,c) = mat(r,c);
@@ -194,7 +198,7 @@ void LinearAlgebra::transpose(Matrix<double> &mat) {
 void LinearAlgebra::subtractRow(Matrix<double> &mat, uint32_t toSubtract, uint32_t subtractFrom) {
     int piv = findPivotInRow(mat, toSubtract, 0, mat.columns);
     if(piv != -1) { //nonzero row
-        double coef = mat(toSubtract, (uint32_t)piv);
+        double coef = mat(subtractFrom, (uint32_t)piv) / mat(toSubtract, (uint32_t)piv);
         for(uint32_t e = (uint32_t)piv; e < mat.columns; e++) {
             mat(subtractFrom, e) -= coef * mat(toSubtract, e);
         }
@@ -264,7 +268,9 @@ void LinearAlgebra::getInformation() {
         if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
             inverse(matrices[4 + m * 8]); //Inverse
         }
-        //TODO Row, Col, NullSpace
+        findColSpace(matrices[6 + m * 8]);
+        findNullSpace(matrices[7 + m * 8]);
+        findRowSpace(matrices[5 + m * 8]);
     }
 }
 
@@ -277,6 +283,9 @@ void LinearAlgebra::printInformation() {
         if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
             cout << "Inverse:\n" << matrices[4 + m * 8] << "\n\n";
         }
+        cout << "Column Space:\n" << matrices[6 + m * 8] << "\n\n";
+        cout << "Null Space:\n" << matrices[7 + m * 8] << "\n\n";
+        cout << "Row Space:\n" << matrices[5 + m * 8] << "\n\n";
     }
 }
 
