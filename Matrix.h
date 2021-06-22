@@ -10,8 +10,15 @@ template<typename T>
 class Matrix {
 public:
     //Default Constructor
+    //REQUIRES: Nothing
+    //MODIFIES: this
+    //EFFECTS: Creates an empty matrix
     Matrix() : Matrix(0,0) {}
+
     //Base Constructor, assigns all elements to zero
+    //REQUIRES: numRows >= 0, numCols >= 0, matrixInit is valid
+    //MODIFIES: this
+    //EFFECTS: Creates a matrix of size numRows x numCols with all values set to zero
     Matrix(uint32_t numRows, uint32_t numCols) : rows(numRows), columns(numCols), matrix(new T*[rows]) {
         // assert((rows >= 0) && (columns >= 0));
         for(uint32_t i = 0; i < rows; i++) {
@@ -25,6 +32,9 @@ public:
     }
     
     //Constructor + Initializer
+    //REQUIRES: numRows >=0, numCols >=0, matrixInit is valid
+    //MODIFIES: this
+    //EFFECTS: Creates a matrix of size numRows x numCols with values read in from matrixInit
     Matrix(uint32_t numRows, uint32_t numCols, std::istream& matrixInit) : 
         rows(numRows), columns(numCols), matrix(new T*[rows]) {
         // assert((rows >= 0) && (columns >= 0));
@@ -45,6 +55,9 @@ public:
     }
 
     //Copy Constructor
+    //REQUIRES: rhs is a valid matrix
+    //MODIFIES: this
+    //EFFECTS: Default constructs this with atomic type variables of rhs, then deep copies the rhs matrix
     Matrix(Matrix &rhs) : determinant(rhs.determinant), rows(rhs.rows), columns(rhs.columns), matrix(new T*[rows]) {
         assert((rows >= 0) && (columns >= 0));
         for(uint32_t i = 0; i < rows; i++) {
@@ -54,6 +67,9 @@ public:
     }
     
     //Assignment Operator
+    //REQUIRES: rhs is a valid matrix
+    //MODIFIES: this
+    //EFFECTS: Deep copy rhs member variables to this
     Matrix &operator=(const Matrix &rhs) {
         if(this == &rhs) { //if same matrix
             return *this;
@@ -73,17 +89,28 @@ public:
     }
 
     //Move Copy Constructor
+    //REQUIRES: rhs is a valid rvalue Matrix
+    //MODIFIES: this
+    //EFFECTS: Creates a default matrix to swap with (allowing for safe deconstruction of rhs after swapping)
+    //         Steals the data from rhs by swapping it with the default matrix, functionally a shallow copy 
     Matrix(Matrix &&rhs) : Matrix() { //Create a default matrix to swap with
         swap(*this, rhs);
     }
 
     //Move Assignment Operator
+    //REQUIRES: rhs is a valid rvalue Matrix
+    //MODIFIES: this
+    //EFFECTS: Steals the data from rhs by swapping it with this (allowing for safe deconstruction of rhs after swapping)
+    //         Functionally a shallow copy
     Matrix &operator=(Matrix &&rhs) {
         swap(*this, rhs);
         return *this;
     }
     
     //Destructor
+    //REQUIRES: Nothing
+    //MODIFIES: matrix
+    //EFFECTS: Deletes the matrix member variable
     ~Matrix() {
         deleteMatrix();
     }
@@ -95,21 +122,29 @@ public:
     uint32_t getCols() const {
         return columns;
     }
+
     ///////////////////////////////////////////////// OPERATORS ////////////////////////////////////////////////////
-    
-    //Row and Column >= 0 and less than the max rows/columns
+    //REQUIRES: row and col are within the bounds of the matrix (>=0 and < numRows/numCols)
+    //MODIFIES: Nothing
+    //EFFECTS: Returns the value of the matrix in the [row,col] position by non-const reference
     T &operator()(uint32_t row, uint32_t col) {
         assert(row >= 0 && row < rows);
         assert(col >= 0 && col < columns);
         return matrix[row][col];
     }
-    //Row and Column >= 0 and less than the max rows/columns
+    //REQUIRES: row and col are within the bounds of the matrix (>=0 and < numRows/numCols)
+    //MODIFIES: Nothing
+    //EFFECTS: Returns the value of the matrix in the [row,col] position by const reference
     const T &operator()(uint32_t row, uint32_t col) const {
         assert(row >= 0 && row < rows);
         assert(col >= 0 && col < columns);
         return matrix[row][col];
     }
 
+    //REQUIRES: matrix and rhs are valid matrices
+    //MODIFIES: Nothing
+    //EFFECTS: Returns whether the matrices are of the same shape and every element in the RHS matrix
+    //         is equal to its corresponding element in the LHS matrix
     bool operator==(const Matrix &rhs) const {
         if((rows != rhs.rows) || (columns != rhs.columns)) {
             return false;
@@ -123,11 +158,19 @@ public:
         }
         return true;
     }
+
+    //REQUIRES: matrix and rhs are valid matrices
+    //MODIFIES: Nothing
+    //EFFECTS: Returns whether the matrices are either not of the same shape or not every element 
+    //         in the RHS matrix is equal to its corresponding element in the LHS matrix
     bool operator!=(const Matrix &rhs) const {
         return !(*this == rhs);
     }
 
-    //Requires matrices of the same shape and data type
+    //REQUIRES: matrix and rhs are valid and of the same shape and type
+    //          and the '+' operator is defined for the type
+    //MODIFIES: matrix
+    //EFFECTS: Adds the RHS matrix to the LHS matrix
     Matrix &operator+(const Matrix &rhs) {
         assert((rows == rhs.rows) && (columns == rhs.columns));
         for(uint32_t row = 0; row < rows; row++) {
@@ -138,7 +181,10 @@ public:
         return *this;
     }
     
-    //Requires matrices of the same shape
+    //REQUIRES: matrix and rhs are valid and of the same shape and type 
+    //          and the '-' operator is defined for the type
+    //MODIFIES: matrix
+    //EFFECTS: Subtracts the RHS matrix from the LHS matrix
     Matrix &operator-(const Matrix &rhs) {
         assert((rows == rhs.rows) && (columns == rhs.columns));
         for(uint32_t row = 0; row < rows; row++) {
@@ -149,7 +195,10 @@ public:
         return *this;
     }
 
-    //Requires mat1.columns == mat2.rows
+    //REQUIRES: matrix and rhs are valid matrices, matrix.columns == rhs.rows
+    //          rhs and matrix are of the same type and the '*' operator is defined for the type
+    //MODIFIES: matrix
+    //EFFECTS: Multiplies matrix and RHS
     Matrix &operator*(const Matrix &rhs) {
         assert(columns == rhs.rows);
         Matrix toReturn(rows, rhs.columns);
@@ -168,6 +217,9 @@ public:
         return *this;
     }
 
+    //REQUIRES: matrix is valid, the '*' operator is defined for the type T
+    //MODIFIES: matrix
+    //EFFECTS: Multiplies each value in matrix by the input coefficient
     Matrix scale(T coefficient) {
         for(uint32_t row = 0; row < rows; row++) {
             for(uint32_t col = 0; col < columns; col++) {
@@ -183,6 +235,9 @@ public:
     T ** matrix;
 
 private:
+    //REQUIRES: matrix is valid
+    //MODIFIES: matrix
+    //EFFECTS: deletes matrix
     void deleteMatrix() {
         for(uint32_t row = 0; row < rows; row++) {
             delete[] matrix[row];
@@ -190,6 +245,9 @@ private:
         delete[] matrix;
     }
 
+    //REQUIRES: rhs is a valid matrix
+    //MODIFIES: matrix
+    //EFFECTS: Copies the RHS matrix into the lhs matrix
     void copyVals(const Matrix &rhs) {
         for(uint32_t row = 0; row < rows; row++) {
             for(uint32_t col = 0; col < columns; col++) {
@@ -198,16 +256,23 @@ private:
         }
     }
 
+    //REQUIRES: first and second are valid matrices
+    //MODIFIES: first and second
+    //EFFECTS: Swaps the rows, columns determinants and matrices of first and second
     void swap(Matrix<T> &first, Matrix<T> &second) { //custom swap for matrices
         std::swap(first.rows, second.rows);
         std::swap(first.columns, second.columns);
         std::swap(first.determinant, second.determinant);
+        T** temp = first.matrix;
         first.matrix = second.matrix;
-        second.matrix = nullptr; //need to let it destruct safely w/o destructing the swapped matrix
+        second.matrix = temp; //need to let it destruct safely w/o destructing the swapped matrix
     }
 
 };
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: Nothing
+//EFFECTS: Prints out the matrix
 template<typename T>
 std::ostream &operator<<(std::ostream &os, const Matrix<T> &mat) {
     if(mat.getRows() == 0 || mat.getCols() == 0) { //Not sure how to get this w/ current for loop
