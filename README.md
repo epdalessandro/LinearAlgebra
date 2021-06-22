@@ -2,8 +2,8 @@
 
 This project will do simple linear algebra on input matrices.
 
-The input file should be formatted as follows:
-[Number of Matrices in File] \
+The input file should be formatted as follows: \
+[Number of Matrices in File]
 
 [Rows] [Columns] \
 [Matrix 1] \
