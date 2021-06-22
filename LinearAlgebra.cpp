@@ -10,6 +10,6 @@ int main(int argc, char* argv[]) {
     LinearAlgebra linal;
     linal.getMode(argc, argv);
     linal.getInput();
-    linal.getInformation();
+    linal.processCommands();
     linal.printInformation();
 }

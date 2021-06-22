@@ -1,6 +1,7 @@
 #include "LinAlg.h"
 #include <getopt.h>
 
+//TODO: Command line processing not needed for now, will later add precision option for the command line
 // Process command line arguments
 //REQUIRES: Nothing
 //MODIFIES: Nothing
@@ -57,78 +58,180 @@ void LinearAlgebra::getMode(int argc, char * argv[]) {
     }
 }
 
-/* InfoMode */
-// numMatrices
-// row col
-// [matrix 1]
-
-// row col
-// [matrix 2]
-// .
-// .
-// -------------------
-/* Operation Mode */
-// numMatrices
-// row col
-// [matrix 1]
-// (Operator)
-// row col
-// [matrix 2]
-// (Operator)
-// .
-// .
-
-
 void LinearAlgebra::getInput() {
-    uint32_t num = 8; //TODO: Fix after I know how many matrices I need for the info mode
     uint32_t row;
     uint32_t col;
+    uint32_t count = 0;
+    
     cin >> numMatrices;
-    if(infoMode) { //info mode
-        uint32_t count = 0;
-        matrices.resize(numMatrices * num);
-        while(cin >> row >> col) {
-            matrices[count] = Matrix<double>(row,col,cin);
-            for(uint32_t c = count + 1; c < count + 8; c++) {
-                matrices[c] = matrices[c - 1];
-            }
-            count += 8;
-        }
+    commands.reserve(numMatrices);
+    matrices.resize(numMatrices, vector<Matrix<double>>());
+    while(cin >> row >> col) {
+        matrices[count].emplace_back(row,col,cin); //don't copy the matrix, construct it in place
+        cin >> commands[count];
     }
-    else { //operation mode
-        matrices.reserve(numMatrices);
-        operators.reserve(numMatrices - 1);
-        char op;
-        while(cin >> row >> col) {
-            matrices.emplace_back(row,col,cin);
-            cin >> op;
-            if(op == '+' || op == '-' || op == '*') {
-                operators.push_back(op);
+}
+
+void LinearAlgebra::processCommands() {
+    for(uint32_t c = 0; c < numMatrices; c++) {
+        if(commands[c] == "All") {
+            for(uint32_t i = 0; i < 7; i++) { //Need 7 new copies
+                matrices[c].emplace_back(matrices[c][0]);
+            }
+
+            subtractDown(matrices[c][1], 0, 0, matrices[c][1].columns); //REF
+            matrices[c][2] = matrices[c][1]; //copy REF before converting to RREF
+
+            subtractUp(matrices[c][2], 0, matrices[c][2].columns); //RREF
+
+            transpose(matrices[c][3]); //Transpose
+
+            if(matrices[c][0].rows == matrices[c][0].columns) { //square matrix
+                inverse(matrices[c][4]); //Inverse
+            }
+
+            findRowSpace(matrices[c][5]);
+            findColSpace(matrices[c][6]);
+            findNullSpace(matrices[c][7]);
+        }
+        else if(commands[c] == "REF") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            subtractDown(matrices[c][1], 0, 0, matrices[c][1].columns);
+        }
+        else if(commands[c] == "RREF") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            subtractDown(matrices[c][1], 0, 0, matrices[c][1].columns);
+            subtractUp(matrices[c][1], 0, matrices[c][1].columns);
+        }
+        else if(commands[c] == "Transpose") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            transpose(matrices[c][1]);
+        }
+        else if(commands[c] == "Inverse") {
+            if(matrices[c][0].rows == matrices[c][0].columns) { //Square
+                matrices[c].resize(2);
+                matrices[c][1] = matrices[c][0];
+                inverse(matrices[c][1]);
             }
             else {
-                cerr << "Invalid Operator";
-                exit(1);
+                cout << "Invalid command for input matrix " << c << ", matrix is not square\n";
+                cout << "Original Matrix:\n" << matrices[c][0] << "\n";
             }
+        }
+        else if(commands[c] == "RowSpace") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            findRowSpace(matrices[c][1]);
+        }
+        else if(commands[c] == "ColumnSpace") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            findColSpace(matrices[c][1]);
+        }
+        else if(commands[c] == "NullSpace") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            findNullSpace(matrices[c][1]);
+        }
+        else if(commands[c] == "Solve") {
+            matrices[c].resize(2);
+            matrices[c][1] = matrices[c][0];
+            subtractDown(matrices[c][1], 0, 0, matrices[c][1].columns - 1);
+            subtractUp(matrices[c][1], 0, matrices[c][1].columns - 1);
+        }
+        else if(commands[c] == "+") {
+            if(c < numMatrices - 1) { //not the last matrix
+                matrices[c + 1][0] = matrices[c + 1][0] + matrices[c][0];
+            }
+            else {
+                cout << "Invalid command for input Matrix " << c << ", unable to add to next matrix\n";
+                cout << "Original Matrix:\n" << matrices[c][0] << "\n";
+            }
+        }
+        else if(commands[c] == "-") {
+            if(c < numMatrices - 1) { //not the last matrix
+                matrices[c + 1][0] = matrices[c + 1][0] - matrices[c][0];
+            }
+            else {
+                cout << "Invalid command for input Matrix " << c << ", unable to add to next matrix\n";
+                cout << "Original Matrix:\n" << matrices[c][0] << "\n";
+            }
+        }
+        else if(commands[c] == "*") {
+            if(c < numMatrices - 1) { //not the last matrix
+                Matrix<double> copy = matrices[c][0]; //temporary copy so that matrices[c][0] isn't changed
+                matrices[c + 1][0] = copy * matrices[c][1];
+            }
+            else {
+                cout << "Invalid command for input Matrix " << c << ", unable to add to next matrix\n";
+                cout << "Original Matrix:\n" << matrices[c][0] << "\n";
+            }
+        }
+        else {
+            cout << "Invalid command for input matrix " << c << "\n";
+            cout << "Original Matrix:\n" << matrices[c][0] << "\n";
         }
     }
 }
 
-Matrix<double> LinearAlgebra::performOperations() {
-    for(size_t m = 0; m < matrices.size() - 1; m++) {
-        char op = operators[m];
-        switch(op) {
-            case '+':
-                matrices[m + 1] = matrices[m] + matrices[m + 1];
-                break;
-            case '-':
-                matrices[m + 1] = matrices[m] - matrices[m + 1];
-                break;
-            case '*':
-                matrices[m + 1] = matrices[m] * matrices[m + 1];
-                break;
+void LinearAlgebra::printInformation() {
+    for(uint32_t m = 0; m < numMatrices; m++) {
+        if(commands[m] == "All") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0] << "\n\n";
+            cout << "Row Echelon Form:\n" << matrices[m][1] << "\n\n";
+            cout << "Reduced Row Echelon Form:\n" << matrices[m][2] << "\n\n";
+            cout << "Transpose:\n" << matrices[m][3] << "\n\n";
+            if(matrices[m][0].rows == matrices[m][0].columns) { //square matrix
+                cout << "Inverse:\n" << matrices[m][4] << "\n\n";
+            }
+            cout << "Column Space:\n";
+            printColumns(matrices[m][6]);
+            cout << "Null Space:\n";
+            printColumns(matrices[m][7]);
+            cout << "Row Space:\n";
+            printRows(matrices[m][5]);
         }
+        else if(commands[m] == "REF") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Row Echelon Form:\n" << matrices[m][1];
+        }
+        else if(commands[m] == "RREF") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Reduced Row Echelon Form:\n" << matrices[m][1];
+        }
+        else if(commands[m] == "Transpose") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Transpose:\n" << matrices[m][1];
+        }
+        else if(commands[m] == "Inverse" && (matrices[m][0].rows == matrices[m][0].columns)) {
+            //square matrix, no output if invalid command
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Inverse:\n" << matrices[m][1] << "\n";
+        }
+        else if(commands[m] == "RowSpace") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Row Space:\n";
+            printRows(matrices[m][1]);
+        }
+        else if(commands[m] == "ColumnSpace") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Column Space:\n";
+            printColumns(matrices[m][1]);
+        }
+        else if(commands[m] == "NullSpace") {
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Null Space:\n";
+            printColumns(matrices[m][1]);
+        }
+        else if(commands[m] == "Solve") { //TODO
+            cout << "Matrix " << m << ":\n" << matrices[m][0];
+            cout << "Solved System:\n" << matrices[m][1];
+        }
+        //No else as no output is printed if the command is invalid or if the command was an operand
     }
-    return matrices.back();
 }
 
 //REQUIRES: mat is valid, row is the topmost row to be subtracted down, startcol is the first column to start subtracting,
@@ -211,7 +314,7 @@ void LinearAlgebra::divideRow(Matrix<double> &mat, uint32_t row) {
 //REQUIRES: mat is a valid matrix, row1 and row2 are valid rows within mat
 //MODIFIES: mat
 //EFFECTS: Switches the positions of row1 and row2 in mat
-//          Determinant is multiplied by -1
+//         Determinant is multiplied by -1
 void LinearAlgebra::interchangeRow(Matrix<double> &mat, uint32_t row1, uint32_t row2) {
     swap(mat.matrix[row1], mat.matrix[row2]); //swap the rows
     mat.determinant *= -1; //interchanging multiplies the determinant by -1
@@ -319,79 +422,34 @@ void LinearAlgebra::calcDeterminant(Matrix<double> &mat) { //must be a square ma
     }
 }
 
-//REQUIRES: For each matrix in the input, it has been copied 7 additional times consecutively in the matrices vector
-//          E.x. [m1, m1, m1, m1, m1, m1, m1, m1, m2, m2, m2, m2, m2, m2, m2, m2, ...]
-//MODIFIES: Nothing
-//EFFECTS: Calculates the REF, RREF, Transpose, Inverse, and Row/Column/Null Space in the order
-//          [OriginalMatrix]   [REF]   [RREF]   [Transpose]  [Inverse]   [RowSpace]  [ColumnSpace]  [NullSpace]
-void LinearAlgebra::getInformation() {
-    for(uint32_t m = 0; m < numMatrices; m++) {
-        subtractDown(matrices[1 + m * 8], 0, 0, matrices[1 + m * 8].columns); //REF
-
-        matrices[2 + m * 8] = matrices[1 + m * 8]; //Copy REF to RREF matrix 
-        subtractUp(matrices[2 + m * 8], 0, matrices[2 + m * 8].columns); //RREF
-
-        transpose(matrices[3 + m * 8]); //Transpose
-
-        if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
-            inverse(matrices[4 + m * 8]); //Inverse
-        }
-
-        findColSpace(matrices[6 + m * 8]); //Column Space
-        findNullSpace(matrices[7 + m * 8]); //Null Space
-        findRowSpace(matrices[5 + m * 8]); //Row Space
-    }
-}
-
-//REQUIRES: The REF, RREF, Transpose, Inverse, and Row/Column/Null Spaces have all been calculated for each input matrix
-//MODIFIES: Nothing
-//EFFECTS: Prints out the REF, RREF, Transpose, Inverse, and Row/Column/Null Spaces for each input matrix
-void LinearAlgebra::printInformation() {
-    for(uint32_t m = 0; m < numMatrices; m++) {
-        cout << "Original Matrix:\n" << matrices[m * 8] << "\n\n";
-        cout << "Reduced Echelon Form:\n" << matrices[1 + m * 8] << "\n\n";
-        cout << "Reduced Row Echelon Form:\n" << matrices[2 + m * 8] << "\n\n";
-        cout << "Transpose:\n" << matrices[3 + m * 8] << "\n\n";
-        if(matrices[4 + m * 8].rows == matrices[4 + m * 8].columns) { //square matrix;
-            cout << "Inverse:\n" << matrices[4 + m * 8] << "\n\n";
-        }
-
-        cout << "Column Space:\n";
-        printColumns(matrices[6 + m * 8]);
-        cout << "Null Space:\n";
-        printColumns(matrices[7 + m * 8]);
-        cout << "Row Space:\n";
-        printRows(matrices[5 + m * 8]);
-    }
-}
-
 /* ---------------------- ACCESSORS ---------------------- */
+
 Matrix<double>& LinearAlgebra::getREF(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 1];
+    return matrices[numInputMat][1];
 }
 
 Matrix<double>& LinearAlgebra::getRREF(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 2];
+    return matrices[numInputMat][2];
 }
 
 Matrix<double>& LinearAlgebra::getTranspose(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 3];
+    return matrices[numInputMat][3];
 }
 
 Matrix<double>& LinearAlgebra::getInverse(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 4];
+    return matrices[numInputMat][4];
 }
 
 Matrix<double>& LinearAlgebra::getRowSpace(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 5];
+    return matrices[numInputMat][5];
 }
 
 Matrix<double>& LinearAlgebra::getColSpace(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 6];
+    return matrices[numInputMat][6];
 }
 
 Matrix<double>& LinearAlgebra::getNullSpace(uint32_t numInputMat) {
-    return matrices[numInputMat * 8 + 7];
+    return matrices[numInputMat][7];
 }
 
 double LinearAlgebra::getDeterminant(Matrix<double> &mat) {

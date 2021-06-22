@@ -18,16 +18,13 @@ public:
     void subtractRow(Matrix<double> &mat, uint32_t toSubtract, uint32_t subtractFrom); //DONE
     int findPivotInRow(Matrix<double> &mat, uint32_t row, uint32_t startCol, uint32_t endCol); //DONE
     pair<int,int> findPivotInMatrix(Matrix<double> &mat, uint32_t startRow, uint32_t startCol, uint32_t endCol); //DONE
-    vector<bool> getIndepCols(Matrix<double> mat); 
-    void calcDeterminant(Matrix<double> &mat);
-    void getInformation();
-    void printInformation();
-
-    double getDeterminant(Matrix<double> &mat); //DONE
+    vector<bool> getIndepCols(Matrix<double> mat); //?Works?
+    void calcDeterminant(Matrix<double> &mat); //DONE
     void findRowSpace(Matrix<double> &mat); //DONE
     void findColSpace(Matrix<double> &mat); //DONE
     void findNullSpace(Matrix<double> &mat); //DONE
 
+    double getDeterminant(Matrix<double> &mat); //DONE
     Matrix<double>& getREF(uint32_t numInputMat); //DONE
     Matrix<double>& getRREF(uint32_t numInputMat); //DONE
     Matrix<double>& getInverse(uint32_t numInputMat); //DONE
@@ -36,14 +33,15 @@ public:
     Matrix<double>& getColSpace(uint32_t numInputMat); //DONE
     Matrix<double>& getNullSpace(uint32_t numInputMat); //DONE
 
+    void processCommands(); //DONE
+
+    void printInformation();
     void printColumns(Matrix<double> const &mat); //DONE
     void printRows(Matrix<double> const &mat); //DONE
 
-    Matrix<double> performOperations(); //DONE
-
 private:
-    vector<Matrix<double>> matrices;
-    vector<char> operators;
+    vector<vector<Matrix<double>>> matrices;
+    vector<string> commands;
     bool infoMode;
     uint32_t numMatrices;
 };
