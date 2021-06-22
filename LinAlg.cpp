@@ -2,6 +2,9 @@
 #include <getopt.h>
 
 // Process command line arguments
+//REQUIRES: Nothing
+//MODIFIES: Nothing
+//EFFECTS: Prints helpful information regarding the program to cout
 void LinearAlgebra::printHelp() {
     cout << "This program will read in a matrix and perform specified operations\n";
     cout << "It will then output requested information about the new matrix\n";
@@ -10,6 +13,9 @@ void LinearAlgebra::printHelp() {
     cout << "The --help flag will give information about program functionality and command-line flags\n";
 }
 
+//REQUIRES: argc, argv are valid
+//MODIFIES: 
+//EFFECTS:
 void LinearAlgebra::getMode(int argc, char * argv[]) {
     // These are used with getopt_long()
     opterr = false; // Let us handle all error output for command line options
@@ -125,6 +131,13 @@ Matrix<double> LinearAlgebra::performOperations() {
     return matrices.back();
 }
 
+//REQUIRES: mat is valid, row is the topmost row to be subtracted down, startcol is the first column to start subtracting,
+//          endcol is one past the last column to subtract
+//MODIFIES: mat
+//EFFECTS: Subtracts from the input row down to the bottom of the matrix so that the matrix entries below each pivot are zero
+//          i.e. puts the matrix into row echelon form
+//          Also only considers pivots between [startCol,endCol) so that the whole row is subtracted, but if the method has not
+//          reached the bottom of the matrix, and there is no pivot remaining between [startCol,endCol) it will stop
 void LinearAlgebra::subtractDown(Matrix<double> &mat, uint32_t row, uint32_t startCol, uint32_t endCol) {
     pair<int,int> pos = findPivotInMatrix(mat, row, startCol, endCol);
     uint32_t nextRow = 0;
@@ -140,6 +153,10 @@ void LinearAlgebra::subtractDown(Matrix<double> &mat, uint32_t row, uint32_t sta
     }
 }
 
+//REQUIRES: mat is a valid matrix, mat is in Row Echelon Form, 
+//          startcol is the first column to start subtracting, endcol is one past the last column to subtract
+//MODIFIES: mat
+//EFFECTS: Turns a matrix in Row Echelon Form (REF) to Reduced Row Echelon Form (RREF)
 void LinearAlgebra::subtractUp(Matrix<double> &mat, uint32_t startCol, uint32_t endCol) {
     int pos;
     for(uint32_t r = mat.rows - 1; r < mat.rows; r--) { //rolls over after hits zero
@@ -153,6 +170,9 @@ void LinearAlgebra::subtractUp(Matrix<double> &mat, uint32_t startCol, uint32_t 
     }
 }
 
+//REQUIRES: mat is a valid matrix, mat is square
+//MODIFIES: mat
+//EFFECTS: Finds the inverse of mat and replaces mat with its inverse
 void LinearAlgebra::inverse(Matrix<double> &mat) {
     Matrix<double> newMat(mat.rows, mat.columns * 2);
     for(uint32_t r = 0; r < mat.rows; r++) {
@@ -173,6 +193,10 @@ void LinearAlgebra::inverse(Matrix<double> &mat) {
     }
 }
 
+//REQUIRES: mat is a valid matrix, row is a valid row within mat
+//MODIFIES: mat, determinant
+//EFFECTS: Divides the corresponding row by its pivot so that its pivot is 1
+//          Determinant is multiplied by the coefficient dividing the row
 void LinearAlgebra::divideRow(Matrix<double> &mat, uint32_t row) {
     int piv = findPivotInRow(mat, row, 0, mat.columns);
     if(piv != -1) { //nonzero row
@@ -184,11 +208,18 @@ void LinearAlgebra::divideRow(Matrix<double> &mat, uint32_t row) {
     }
 }
 
+//REQUIRES: mat is a valid matrix, row1 and row2 are valid rows within mat
+//MODIFIES: mat
+//EFFECTS: Switches the positions of row1 and row2 in mat
+//          Determinant is multiplied by -1
 void LinearAlgebra::interchangeRow(Matrix<double> &mat, uint32_t row1, uint32_t row2) {
     swap(mat.matrix[row1], mat.matrix[row2]); //swap the rows
     mat.determinant *= -1; //interchanging multiplies the determinant by -1
 }
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: mat
+//EFFECTS: Finds the transpose of mat and replaces mat with it
 void LinearAlgebra::transpose(Matrix<double> &mat) {
     Matrix<double> newMat(mat.columns, mat.rows);
     for(uint32_t r = 0; r < mat.rows; r++) {
@@ -199,6 +230,13 @@ void LinearAlgebra::transpose(Matrix<double> &mat) {
     mat = newMat; //Can use the steal constructor here, newMat is an rValue
 }
 
+//REQUIRES: mat is a valid matrix, toSubtract and subtractFrom are valid rows within mat
+//MODIFIES: mat
+//EFFECTS: Subtracts the row at the toSubtract position from the row at the subtractFrom position
+//         The coefficient the toSubtract row is multiplied by is the value in the subtractFrom row in the 
+//         toSubtract pivot position column divided by the value of the toSubtract pivot position
+//         i.e. it subtracts the toSubtract row from the subtractFrom row so that the    E.x [1,1,1,1] -> [1,1,1,1]
+//         value in the subtractFrom row below the toSubtract pivot is zero                  [2,3,4,5]    [0,1,2,3]     
 void LinearAlgebra::subtractRow(Matrix<double> &mat, uint32_t toSubtract, uint32_t subtractFrom) {
     int piv = findPivotInRow(mat, toSubtract, 0, mat.columns);
     if(piv != -1) { //nonzero row
@@ -209,6 +247,9 @@ void LinearAlgebra::subtractRow(Matrix<double> &mat, uint32_t toSubtract, uint32
     }
 }
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: mat
+//EFFECTS: Finds a basis for the Column Space of mat, and replaces mat with that basis
 void LinearAlgebra::findColSpace(Matrix<double> &mat) {
     vector<bool> independentCols = getIndepCols(mat);
 
@@ -233,6 +274,9 @@ void LinearAlgebra::findColSpace(Matrix<double> &mat) {
     mat = newMat;
 }
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: mat
+//EFFECTS: Finds a basis for the Null Space of mat, and replaces mat with that basis
 void LinearAlgebra::findNullSpace(Matrix<double> &mat) {
     vector<bool> independentCols = getIndepCols(mat);
 
@@ -257,19 +301,29 @@ void LinearAlgebra::findNullSpace(Matrix<double> &mat) {
     mat = newMat;
 }
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: mat
+//EFFECTS: Finds a basis for the Row Space of mat, and replaces mat with that basis
 void LinearAlgebra::findRowSpace(Matrix<double> &mat) {
     transpose(mat);
     findColSpace(mat);
     transpose(mat);
 }
 
+//REQUIRES: mat is a valid matrix in Row Echelon Form or Reduced Row Echelon Form
+//MODIFIES: determinant
+//EFFECTS: Calculates the determinant of the mat
 void LinearAlgebra::calcDeterminant(Matrix<double> &mat) { //must be a square matrix
     for(uint32_t r = 0; r < mat.rows; r++) {
         mat.determinant *= mat(r,r);
     }
 }
 
-// [Matrix]   [REF]   [RREF]   [Transpose]  [Inverse]   [RowSpace]  [ColSpace]  [NullSpace]
+//REQUIRES: For each matrix in the input, it has been copied 7 additional times consecutively in the matrices vector
+//          E.x. [m1, m1, m1, m1, m1, m1, m1, m1, m2, m2, m2, m2, m2, m2, m2, m2, ...]
+//MODIFIES: Nothing
+//EFFECTS: Calculates the REF, RREF, Transpose, Inverse, and Row/Column/Null Space in the order
+//          [OriginalMatrix]   [REF]   [RREF]   [Transpose]  [Inverse]   [RowSpace]  [ColumnSpace]  [NullSpace]
 void LinearAlgebra::getInformation() {
     for(uint32_t m = 0; m < numMatrices; m++) {
         subtractDown(matrices[1 + m * 8], 0, 0, matrices[1 + m * 8].columns); //REF
@@ -289,6 +343,9 @@ void LinearAlgebra::getInformation() {
     }
 }
 
+//REQUIRES: The REF, RREF, Transpose, Inverse, and Row/Column/Null Spaces have all been calculated for each input matrix
+//MODIFIES: Nothing
+//EFFECTS: Prints out the REF, RREF, Transpose, Inverse, and Row/Column/Null Spaces for each input matrix
 void LinearAlgebra::printInformation() {
     for(uint32_t m = 0; m < numMatrices; m++) {
         cout << "Original Matrix:\n" << matrices[m * 8] << "\n\n";
@@ -342,6 +399,11 @@ double LinearAlgebra::getDeterminant(Matrix<double> &mat) {
 }
 
 /* ---------------------- HELPERS ---------------------- */
+
+//REQUIRES: mat is a valid matrix, row is a valid row in the matrix
+//MODIFIES: Nothing
+//EFFECTS: Finds the column of the first non-zero element in the specified row in the range of columns [startCol,endCol)
+//         If no such pivot is found (the row is a zero row), -1 is returned
 int LinearAlgebra::findPivotInRow(Matrix<double> &mat, uint32_t row, uint32_t startCol, uint32_t endCol) {
     for(uint32_t e = startCol; e < endCol; e++) {
         if(mat(row, e) != 0) {
@@ -351,6 +413,9 @@ int LinearAlgebra::findPivotInRow(Matrix<double> &mat, uint32_t row, uint32_t st
     return -1;
 }
 
+//REQUIRES: mat is a valid matrix,
+//MODIFIES: Nothing
+//EFFECTS: Finds the first non-zero (pivot) element in the matrix starting from startRow and in the range of columns [startCol,endCol)
 pair<int,int> LinearAlgebra::findPivotInMatrix(Matrix<double> &mat, uint32_t startRow, uint32_t startCol, uint32_t endCol) {
     for(uint32_t c = startCol; c < endCol; c++) {
         for(uint32_t r = startRow; r < mat.rows; r++) {
@@ -362,7 +427,11 @@ pair<int,int> LinearAlgebra::findPivotInMatrix(Matrix<double> &mat, uint32_t sta
     return make_pair(-1, -1);
 }
 
-//Not having a reference is intention, need to create a copy so that the original matrix is untouched
+//REQUIRES: mat is a valid matrix
+//MODIFIES: Nothing
+//EFFECTS: Turns a copy of the input matrix into its corresponding RREF
+//         Then returns a vector of bools for whether or not a pivot appears in a specific column in the matrix
+//         Note: Not having a reference is intentional, a copy is needed so that the original matrix is untouched
 vector<bool> LinearAlgebra::getIndepCols(Matrix<double> mat) { //I should return this by reference but then its a reference to a destructed object
     subtractDown(mat, 0, 0, mat.columns);                       //maybe stealing means its not actually copied?
     subtractUp(mat, 0, mat.columns);
@@ -381,6 +450,9 @@ vector<bool> LinearAlgebra::getIndepCols(Matrix<double> mat) { //I should return
     return independentCols;
 }
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: Nothing
+//EFFECTS: Prints out the columns of a matrix individually
 void LinearAlgebra::printColumns(Matrix<double> const &mat) {
     if(mat.getRows() == 0 || mat.getCols() == 0) { //Empty Matrix
         cout << "[  ]\n\n";
@@ -399,6 +471,9 @@ void LinearAlgebra::printColumns(Matrix<double> const &mat) {
     }
 }
 
+//REQUIRES: mat is a valid matrix
+//MODIFIES: Nothing
+//EFFECTS: Prints out the rows of a matrix individually
 void LinearAlgebra::printRows(Matrix<double> const &mat) {
     if(mat.getRows() == 0 || mat.getCols() == 0) { //Empty Matrix
         cout << "[ ";
