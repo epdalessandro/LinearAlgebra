@@ -23,23 +23,15 @@ void LinearAlgebra::getMode(int argc, char * argv[]) {
     int choice;
     int option_index = 0;
     option long_options[] = {
-        {"operations",   no_argument,       nullptr, 'o'  },
-        {"information",  no_argument,       nullptr, 'i'  },
+        {"precision",    required_argument, nullptr, 'p'  },
         {"help",         no_argument,       nullptr, 'h'  },
         {nullptr,        0,                 nullptr, '\0' }
     };
 
-    string str;
-    bool modeSelected = false;
     while ((choice = getopt_long(argc, argv, "oih", long_options, &option_index)) != -1) {
         switch (choice) {
-            case 'o':
-                infoMode = false;
-                modeSelected = true;
-                break;
-            case 'i':
-                infoMode = true;
-                modeSelected = true;
+            case 'p':
+                precision = (uint32_t)atoi(optarg);
                 break;
             case 'h':
                 printHelp();
@@ -52,10 +44,8 @@ void LinearAlgebra::getMode(int argc, char * argv[]) {
             } // switch
     } // while
 
-    if(!modeSelected) {
-        cerr << "No operations specified";
-        exit(1);
-    }
+    cout << std::setprecision(precision); //Set number of output decimal places
+    cout << std::fixed(); //Disable scientific notation
 }
 
 void LinearAlgebra::getInput() {
