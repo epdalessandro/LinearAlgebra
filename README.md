@@ -29,4 +29,4 @@ Operand --- Performs the operation on the input matrix and the next matrix in th
 
 Note: As of now no errors are thrown if input files are incorrect so be careful when adding/subtracting/multiplying matrices that matrix dimensions are correct and that the matrix is square if the inverse is asked for.
 
-Command Line Options: -i or -information for one of All, -o or -operation for operands
+Command Line Options: -p/-precision [num] allows the user to set the number of output decimal places, default 2
