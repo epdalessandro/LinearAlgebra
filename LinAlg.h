@@ -42,6 +42,6 @@ public:
 private:
     vector<vector<Matrix<double>>> matrices;
     vector<string> commands;
-    bool infoMode;
     uint32_t numMatrices;
+    uint32_t precision = 2;
 };
